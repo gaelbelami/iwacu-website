@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════
+   Iwacu Collective Center — Design System
+   Based on "The Campaign" (Bold v2) direction
+   ═══════════════════════════════════════════════════ */
+
+@theme inline {
+  /* ── Brand colors ─────────────────────────── */
+  --color-forest: #2E3D2E;
+  --color-forest-deep: #22301F;
+  --color-forest-soft: #3B4B39;
+  --color-oatmeal: #EFE9DA;
+  --color-cream: #F7F2E4;
+  --color-cream-warm: #F2ECD9;
+  --color-accent: #E8C87A;
+  --color-accent-soft: #F0DFB1;
+  --color-ink: #1A211A;
+  --color-ink-soft: #3E4A3D;
+  --color-rule: rgba(46, 61, 46, 0.14);
+  --color-rule-on-green: rgba(239, 233, 218, 0.16);
+
+  /* ── Font families ────────────────────────── */
+  --font-display: var(--font-space-grotesk);
+  --font-body: var(--font-manrope);
+  --font-serif: var(--font-dm-serif);
+
+  /* ── Animations ───────────────────────────── */
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-pulse-dot: pulse-dot 2s infinite;
+}
+
+/* ── Keyframes ────────────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, #E8C87A 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, #E8C87A 0%, transparent);
+  }
+}
+
+/* ── Base styles ──────────────────────────────── */
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Utility: container ───────────────────────── */
+.container-iwacu {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(20px, 4vw, 56px);
+  padding-right: clamp(20px, 4vw, 56px);
+}
+
+/* ── Text stroke utility (for outline text) ──── */
+.text-stroke-oatmeal {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-oatmeal);
+}
+
+/* ── Scrollbar styling for stories carousel ──── */
+.stories-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.stories-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.stories-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+  border-radius: 3px;
+}
