@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export async function loginAction(formData: FormData): Promise<void> {
   const email = formData.get("email") as string;
@@ -33,10 +34,21 @@ export async function signupAction(formData: FormData): Promise<void> {
 
 export async function loginWithGoogleAction(): Promise<void> {
   const supabase = await createSupabaseServerClient();
+
+  // Build the callback URL from the current request's origin so Google
+  // OAuth works on localhost, the Vercel URL, and the future domain
+  // without any code changes.
+  const h = await headers();
+  const origin =
+    h.get("origin") ||
+    h.get("x-forwarded-host") && `https://${h.get("x-forwarded-host")}` ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "http://localhost:3000";
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "http://localhost:3000/admin/auth/callback",
+      redirectTo: `${origin}/admin/auth/callback`,
     },
   });
 
