@@ -20,10 +20,11 @@ export default async function StoriesPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ tag?: string; sort?: string; q?: string }>;
+  searchParams: Promise<{ tag?: string; sort?: string; q?: string; page?: string }>;
 }) {
   const { locale } = await params;
-  const { tag: activeTag, sort: activeSort, q: searchQuery } = await searchParams;
+  const { tag: activeTag, sort: activeSort, q: searchQuery, page: pageParam } = await searchParams;
+  const currentPage = Math.max(1, parseInt(pageParam || "1", 10) || 1);
   const t = await getTranslations("storiesPage");
   const allStories = await getPublishedStories(locale as "en" | "fr");
 
@@ -102,7 +103,7 @@ export default async function StoriesPage({
     : null;
 
   const recentStories = gridStories
-    ? gridStories.slice(0, 6)
+    ? (isFiltered ? gridStories : gridStories.slice(0, 6))
     : [
         { id: "n1", tag: t("recent1Tag"), tagVariant: "ongoing", imagePlaceholder: t("recent1Img"), meta: t("recent1Meta"), title: t("recent1Title"), excerpt: t("recent1Excerpt") },
         { id: "n2", tag: t("recent2Tag"), tagVariant: "voices", imagePlaceholder: t("recent2Img"), meta: t("recent2Meta"), title: t("recent2Title"), excerpt: t("recent2Excerpt") },
@@ -113,12 +114,22 @@ export default async function StoriesPage({
       ];
 
   const earlierStories = gridStories
-    ? gridStories.slice(6)
+    ? gridStories.slice(6, 6 + currentPage * 6)
     : [
         { id: "e1", tag: t("earlier1Tag"), tagVariant: "voices", imagePlaceholder: t("earlier1Img"), meta: t("earlier1Meta"), title: t("earlier1Title"), excerpt: t("earlier1Excerpt") },
         { id: "e2", tag: t("earlier2Tag"), tagVariant: "success", imagePlaceholder: t("earlier2Img"), meta: t("earlier2Meta"), title: t("earlier2Title"), excerpt: t("earlier2Excerpt") },
         { id: "e3", tag: t("earlier3Tag"), tagVariant: "field", imagePlaceholder: t("earlier3Img"), meta: t("earlier3Meta"), title: t("earlier3Title"), excerpt: t("earlier3Excerpt") },
       ];
+
+  // ── Pagination: reveal 6 "earlier" stories per page ──
+  const earlierPoolSize = gridStories ? Math.max(0, gridStories.length - 6) : 0;
+  const hasMore = !isFiltered && earlierPoolSize > currentPage * 6;
+  const loadMoreParams = new URLSearchParams();
+  if (activeTag) loadMoreParams.set("tag", activeTag);
+  if (activeSort && activeSort !== "recent") loadMoreParams.set("sort", activeSort);
+  if (searchQuery) loadMoreParams.set("q", searchQuery);
+  loadMoreParams.set("page", String(currentPage + 1));
+  const loadMoreHref = `?${loadMoreParams.toString()}`;
 
   // ── Filter button config ──────────────────────
   const filters = [
@@ -312,11 +323,14 @@ export default async function StoriesPage({
             </div>
           )}
 
-          {!isFiltered && (
+          {hasMore && (
             <div className="mt-20 flex justify-center">
-              <button className="inline-flex items-center gap-3 rounded-full border-[1.5px] border-forest px-6 py-3.5 font-display text-[15px] font-medium text-forest transition-all hover:bg-forest hover:text-oatmeal">
+              <Link
+                href={loadMoreHref}
+                className="inline-flex items-center gap-3 rounded-full border-[1.5px] border-forest px-6 py-3.5 font-display text-[15px] font-medium text-forest transition-all hover:bg-forest hover:text-oatmeal"
+              >
                 {t("loadMore")} <span>↓</span>
-              </button>
+              </Link>
             </div>
           )}
         </div>
