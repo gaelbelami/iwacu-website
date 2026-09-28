@@ -4,6 +4,18 @@ import { getAdminClient } from "@/lib/supabase-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+/** Parse the gallery hidden field (JSON array of public URLs). */
+function parseGallery(formData: FormData): string[] {
+  try {
+    const raw = formData.get("gallery") as string | null;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((u) => typeof u === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function createStory(formData: FormData): Promise<void> {
   const admin = getAdminClient();
 
@@ -41,6 +53,7 @@ export async function createStory(formData: FormData): Promise<void> {
       is_featured: formData.get("is_featured") === "on",
       status: (formData.get("status") as string) || "draft",
       image_url: (formData.get("image_url") as string) || null,
+      gallery: parseGallery(formData),
     };
 
     if (payload.status === "published") {
@@ -94,6 +107,7 @@ export async function updateStory(id: string, formData: FormData): Promise<void>
       is_featured: formData.get("is_featured") === "on",
       status: (formData.get("status") as string) || "draft",
       image_url: (formData.get("image_url") as string) || null,
+      gallery: parseGallery(formData),
       updated_at: new Date().toISOString(),
     };
 
@@ -124,10 +138,34 @@ export async function updateStory(id: string, formData: FormData): Promise<void>
   }
 }
 
+/** Extract the storage path from a public bucket URL, or null if external. */
+function storagePath(url: string): string | null {
+  const marker = "/storage/v1/object/public/images/";
+  const idx = url.indexOf(marker);
+  return idx === -1 ? null : decodeURIComponent(url.slice(idx + marker.length));
+}
+
 export async function deleteStory(id: string): Promise<void> {
   const admin = getAdminClient();
   try {
+    // Collect image URLs first so we can purge the story's storage files
+    const { data: story } = await admin
+      .from("stories")
+      .select("image_url, gallery")
+      .eq("id", id)
+      .single();
+
     await admin.from("stories").delete().eq("id", id);
+
+    const urls = [
+      ...(story?.image_url ? [story.image_url] : []),
+      ...(Array.isArray(story?.gallery) ? story.gallery : []),
+    ];
+    const paths = urls.map(storagePath).filter((p): p is string => !!p);
+    if (paths.length > 0) {
+      await admin.storage.from("images").remove(paths);
+    }
+
     revalidatePath("/admin/stories");
   } catch (e) {
     console.error("deleteStory error:", e);

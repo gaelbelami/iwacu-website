@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import ImageSlot from "@/components/ImageSlot";
 import { Link } from "@/i18n/navigation";
 import { getStoryBySlug, getRelatedStories } from "@/services/stories";
+import ImageCarousel from "@/components/ImageCarousel";
 
 const tagStyles: Record<string, string> = {
   success: "bg-forest text-accent",
@@ -24,7 +25,7 @@ export async function generateMetadata({
   if (!story) return { title: "Story not found" };
 
   return {
-    title: `${story.title} — Iwacu Collective Center`,
+    title: story.title,
     description: story.excerpt,
   };
 }
@@ -113,13 +114,28 @@ export default async function StoryPage({
         </div>
       </header>
 
-      {/* ── Featured Image ────────────────────── */}
-      {story.imagePlaceholder && (story.imagePlaceholder.startsWith("http") || story.imagePlaceholder.startsWith("//")) && (
+      {/* ── Featured Image / Gallery carousel ── */}
+      {story.gallery && story.gallery.length > 0 ? (
         <div className="container-iwacu pb-12">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-forest text-oatmeal">
-            <ImageSlot placeholder={story.imagePlaceholder} alt={story.title} />
-          </div>
+          <ImageCarousel
+            images={story.gallery}
+            cover={
+              story.imagePlaceholder?.startsWith("http") || story.imagePlaceholder?.startsWith("//")
+                ? story.imagePlaceholder
+                : undefined
+            }
+            alt={story.title}
+          />
         </div>
+      ) : (
+        story.imagePlaceholder &&
+        (story.imagePlaceholder.startsWith("http") || story.imagePlaceholder.startsWith("//")) && (
+          <div className="container-iwacu pb-12">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-forest text-oatmeal">
+              <ImageSlot placeholder={story.imagePlaceholder} alt={story.title} />
+            </div>
+          </div>
+        )
       )}
 
       {/* ── Body ──────────────────────────────── */}

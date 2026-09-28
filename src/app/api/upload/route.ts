@@ -64,3 +64,41 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+/**
+ * Delete an image from the `images` bucket.
+ * Body: { url } — the public URL returned at upload time.
+ * Refuses URLs that do not point into this bucket, so it can't be
+ * used to probe or delete external resources.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { url } = await request.json();
+    if (typeof url !== "string" || !url) {
+      return NextResponse.json({ error: "Missing url" }, { status: 400 });
+    }
+
+    const marker = "/storage/v1/object/public/images/";
+    const idx = url.indexOf(marker);
+    if (idx === -1) {
+      return NextResponse.json(
+        { error: "Not a bucket image — refusing to delete external URL" },
+        { status: 400 }
+      );
+    }
+    const path = decodeURIComponent(url.slice(idx + marker.length));
+
+    const admin = getAdminClient();
+    const { error } = await admin.storage.from("images").remove([path]);
+
+    if (error) {
+      console.error("Delete error:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Delete route error:", error);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}

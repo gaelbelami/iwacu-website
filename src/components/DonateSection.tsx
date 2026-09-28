@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Link } from "@/i18n/navigation";
 
 interface DonateData {
   eyebrow?: string;
@@ -116,12 +117,12 @@ export default function DonateSection({ data }: { data?: DonateData }) {
           </button>
         </div>
 
-        <a
-          href="#"
+        <Link
+          href="/donate"
           className="inline-flex items-center justify-center gap-4 rounded-full bg-oatmeal px-8 py-5 text-center font-display text-xl font-semibold text-forest transition-transform hover:-translate-y-0.5"
         >
           {ctaText} <span>→</span>
-        </a>
+        </Link>
       </div>
     </section>
   );

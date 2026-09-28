@@ -31,6 +31,7 @@ export async function getPublishedStories(locale: Locale) {
     readTime: s.read_time || 5,
     isFeatured: s.is_featured,
     publishedAt: s.published_at,
+    gallery: Array.isArray(s.gallery) ? s.gallery : [],
   }));
 }
 
@@ -64,6 +65,7 @@ export async function getStoryBySlug(slug: string, locale: Locale) {
     readTime: data.read_time || 5,
     isFeatured: data.is_featured,
     publishedAt: data.published_at,
+    gallery: Array.isArray(data.gallery) ? data.gallery : [],
   };
 }
 

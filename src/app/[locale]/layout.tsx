@@ -32,9 +32,31 @@ export async function generateMetadata(props: {
   const { locale } = await props.params;
   const t = await getTranslations({ locale, namespace: "meta" });
 
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://iwacu.vercel.app";
+
   return {
-    title: t("title"),
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: t("title"),
+      template: `%s — Iwacu Collective Center`,
+    },
     description: t("description"),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      url: `${baseUrl}/${locale}`,
+      siteName: "Iwacu Collective Center",
+      locale: locale === "fr" ? "fr_FR" : "en_US",
+      type: "website",
+    },
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        en: `${baseUrl}/en`,
+        fr: `${baseUrl}/fr`,
+      },
+    },
   };
 }
 

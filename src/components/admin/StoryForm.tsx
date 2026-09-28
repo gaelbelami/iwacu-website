@@ -4,6 +4,7 @@ import { createStory, updateStory } from "@/actions/stories";
 import { useFormStatus } from "react-dom";
 import { useState } from "react";
 import { ImageUploader } from "./ImageUploader";
+import { GalleryUploader } from "./GalleryUploader";
 
 interface StoryData {
   id?: string;
@@ -21,6 +22,7 @@ interface StoryData {
   is_featured?: boolean;
   status?: string;
   image_url?: string | null;
+  gallery?: string[] | null;
 }
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
@@ -67,8 +69,17 @@ export function StoryForm({ story }: { story?: StoryData }) {
             <ImageUploader
               name="image_url"
               defaultValue={story?.image_url}
-              folder="stories"
+              folder={`stories/${story?.slug || "new-story"}`}
               label="Cover Image"
+            />
+          </div>
+
+          <div className="col-span-2">
+            <GalleryUploader
+              name="gallery"
+              defaultValue={story?.gallery}
+              folder={`stories/${story?.slug || "new-story"}`}
+              label="Gallery Images (shown as a carousel on the story page)"
             />
           </div>
 

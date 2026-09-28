@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase-admin";
+import { NewsletterComposer } from "@/components/admin/NewsletterComposer";
 
 export default async function SubscribersPage() {
   const admin = getAdminClient();
@@ -34,6 +35,8 @@ export default async function SubscribersPage() {
           </a>
         )}
       </div>
+
+      <NewsletterComposer activeCount={activeCount} />
 
       <div className="bg-white rounded-xl border border-[#2E3D2E]/10 overflow-hidden">
         <table className="w-full">

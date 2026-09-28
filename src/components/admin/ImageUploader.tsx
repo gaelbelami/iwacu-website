@@ -67,6 +67,15 @@ export function ImageUploader({
   };
 
   const handleRemove = () => {
+    // Remove from Supabase Storage too, so no orphan files pile up.
+    // External URLs are refused by the endpoint and simply cleared here.
+    if (url) {
+      fetch("/api/upload", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      }).catch(() => {});
+    }
     setUrl(null);
     setError(null);
   };

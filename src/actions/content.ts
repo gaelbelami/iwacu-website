@@ -47,6 +47,41 @@ export async function updateHomepage(formData: FormData): Promise<void> {
   revalidatePath("/admin/content");
 }
 
+export async function updateDonateSettings(formData: FormData): Promise<void> {
+  const admin = getAdminClient();
+
+  // Merge into the existing content JSONB so nav/footer/meta survive
+  const { data: existing } = await admin
+    .from("site_settings")
+    .select("content")
+    .limit(1)
+    .single();
+
+  const content = (existing?.content as Record<string, unknown>) || {};
+  content.donate = {
+    goal: parseFloat(formData.get("goal") as string) || 0,
+    raised: parseFloat(formData.get("raised") as string) || 0,
+    currency: (formData.get("currency") as string) || "USD",
+    stripeUrl: (formData.get("stripe_url") as string) || "",
+    mobileText: {
+      en: (formData.get("mobile_text_en") as string) || "",
+      fr: (formData.get("mobile_text_fr") as string) || "",
+    },
+    bankText: {
+      en: (formData.get("bank_text_en") as string) || "",
+      fr: (formData.get("bank_text_fr") as string) || "",
+    },
+  };
+
+  await admin
+    .from("site_settings")
+    .update({ content, updated_at: new Date().toISOString() })
+    .eq("id", "00000000-0000-0000-0000-000000000001");
+
+  revalidatePath("/donate");
+  revalidatePath("/admin/content");
+}
+
 export async function updateWorkProgram(id: string, formData: FormData): Promise<void> {
   const admin = getAdminClient();
 

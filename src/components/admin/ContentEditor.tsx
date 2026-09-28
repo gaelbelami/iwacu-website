@@ -1,6 +1,6 @@
 "use client";
 
-import { updateHomepage, updateWorkProgram } from "@/actions/content";
+import { updateDonateSettings, updateHomepage, updateWorkProgram } from "@/actions/content";
 import { useState, useTransition } from "react";
 
 interface HomepageData {
@@ -14,31 +14,52 @@ interface ProgramData {
   description: { en: string; fr: string };
 }
 
+interface DonateData {
+  goal?: number;
+  raised?: number;
+  currency?: string;
+  stripeUrl?: string;
+  mobileText?: { en: string; fr: string };
+  bankText?: { en: string; fr: string };
+}
+
 export function ContentEditor({
   homepage,
   programs,
+  donate,
 }: {
   homepage: HomepageData;
   programs: ProgramData[];
+  donate?: DonateData;
 }) {
   const [tab, setTab] = useState<"en" | "fr">("en");
-  const [section, setSection] = useState<"hero" | "mission" | "programs">("hero");
+  const [section, setSection] = useState<"hero" | "mission" | "programs" | "donate">("hero");
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+
+  function flashSaved() {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  }
 
   function handleHomepageSubmit(formData: FormData) {
     startTransition(async () => {
       await updateHomepage(formData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      flashSaved();
     });
   }
 
   function handleProgramSubmit(id: string, formData: FormData) {
     startTransition(async () => {
       await updateWorkProgram(id, formData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      flashSaved();
+    });
+  }
+
+  function handleDonateSubmit(formData: FormData) {
+    startTransition(async () => {
+      await updateDonateSettings(formData);
+      flashSaved();
     });
   }
 
@@ -46,7 +67,7 @@ export function ContentEditor({
     <div className="space-y-6">
       {/* Section Tabs */}
       <div className="flex gap-1 bg-white rounded-xl border border-[#2E3D2E]/10 p-1.5 w-fit">
-        {(["hero", "mission", "programs"] as const).map((s) => (
+        {(["hero", "mission", "programs", "donate"] as const).map((s) => (
           <button
             key={s}
             onClick={() => { setSection(s); setSaved(false); }}
@@ -160,6 +181,88 @@ export function ContentEditor({
             </form>
           ))}
         </div>
+      )}
+
+      {/* Donate settings */}
+      {section === "donate" && (
+        <form action={handleDonateSubmit} className="bg-white rounded-xl border border-[#2E3D2E]/10 p-6 space-y-4">
+          <h2 className="text-lg font-semibold font-[family-name:var(--font-space-grotesk)] text-[#2E3D2E] mb-4">
+            Donation Page Settings
+          </h2>
+          <p className="text-sm text-[#2E3D2E]/60 -mt-2">
+            Drives the funding progress bar and the ways-to-give cards on the public donate page. Leave a field empty to show its "coming soon" state.
+          </p>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[#2E3D2E]/80 mb-1">Goal amount</label>
+              <input
+                name="goal"
+                type="number"
+                min="0"
+                step="any"
+                defaultValue={donate?.goal || 0}
+                className="w-full px-4 py-2 rounded-lg border border-[#2E3D2E]/20 bg-[#F7F2E4] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D2E]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#2E3D2E]/80 mb-1">Raised so far</label>
+              <input
+                name="raised"
+                type="number"
+                min="0"
+                step="any"
+                defaultValue={donate?.raised || 0}
+                className="w-full px-4 py-2 rounded-lg border border-[#2E3D2E]/20 bg-[#F7F2E4] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D2E]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#2E3D2E]/80 mb-1">Currency</label>
+              <input
+                name="currency"
+                defaultValue={donate?.currency || "USD"}
+                placeholder="USD"
+                className="w-full px-4 py-2 rounded-lg border border-[#2E3D2E]/20 bg-[#F7F2E4] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D2E]/20"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#2E3D2E]/80 mb-1">Stripe payment link</label>
+            <input
+              name="stripe_url"
+              type="url"
+              defaultValue={donate?.stripeUrl || ""}
+              placeholder="https://buy.stripe.com/… (leave empty until your Stripe account is ready)"
+              className="w-full px-4 py-2 rounded-lg border border-[#2E3D2E]/20 bg-[#F7F2E4] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E3D2E]/20"
+            />
+          </div>
+
+          <FieldTextarea
+            name="mobile_text"
+            label="Mobile money instructions"
+            tab={tab}
+            values={donate?.mobileText as any}
+            rows={3}
+          />
+          <FieldTextarea
+            name="bank_text"
+            label="Bank transfer instructions"
+            tab={tab}
+            values={donate?.bankText as any}
+            rows={3}
+          />
+
+          <div className="flex justify-end pt-4">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="px-6 py-2.5 bg-[#2E3D2E] text-[#EFE9DA] rounded-lg font-semibold text-sm hover:bg-[#2E3D2E]/90 transition-colors disabled:opacity-50"
+            >
+              {isPending ? "Saving..." : "Save Donate Settings"}
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );
